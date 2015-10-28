@@ -6,9 +6,10 @@ Analysis pipeline for GUIDE-seq dataset
 \description{
 A wrapper function that uses the UMI sequence plus the first few bases of each
     sequence from R1 reads to estimate the starting sequence library, piles up
-    reads with a user defined window and step size, identify the cleavage sites,
-    merge cleavage sites from plus strand and minus strand, followed by off
-    target analysis of extended regions around the identified cleavage sites.
+    reads with a user defined window and step size, identify the insertion sites
+    (proxy of cleavage sites), merge cleavage sites from plus strand and minus 
+    strand, followed by off target analysis of extended regions around the 
+    identified cleavage sites.
 }
 \usage{
 GUIDEseqAnalysis(alignment.inputfile, umi.inputfile,

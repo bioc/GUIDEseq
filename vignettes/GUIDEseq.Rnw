@@ -14,11 +14,11 @@ BiocStyle::latex()
 \usepackage{graphicx}
 \usepackage[section]{placeins}
 \bibliographystyle{plainnat}
-\author{Lihua Julie Zhu, Michael Lawrence, Ankit Gupta, Scot Wolfe}
+\author{Lihua Julie Zhu, Michael Lawrence, Ankit Gupta, \\ Alper Kucukural, Manuel Garber, Scot Wolfe}
 \begin{document}
 \SweaveOpts{concordance=TRUE}
 
-<<include=FALSE>>=
+<<include=FALSE, echo=FALSE, eval=TRUE>>=
 library(knitr)
 opts_chunk$set(
 concordance=TRUE
