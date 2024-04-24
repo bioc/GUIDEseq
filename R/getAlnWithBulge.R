@@ -1,4 +1,5 @@
-#' @importFrom Biostrings DNAStringSet nucleotideSubstitutionMatrix pairwiseAlignment readDNAStringSet reverseComplement
+#' @importFrom Biostrings DNAStringSet readDNAStringSet reverseComplement
+#' @importFrom pwalign nucleotideSubstitutionMatrix pairwiseAlignment
 #' @importFrom utils read.table
 #' @author Lihua Julie Zhu
 

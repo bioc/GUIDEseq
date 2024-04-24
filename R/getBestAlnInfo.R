@@ -47,8 +47,8 @@
 #' n.deletion: Number of deletions in the RNA. Deletions in gRNA creates
 #' bulged DNA base
 #' @author Lihua Julie Zhu
-#' @importFrom Biostrings alignedPattern alignedSubject reverseComplement
-#' DNAString neditAt start width score subject
+#' @importFrom Biostrings reverseComplement DNAString neditAt start width
+#' @importFrom pwalign alignedPattern alignedSubject score subject
 #' @export
 #'
 getBestAlnInfo <- function(offtargetSeq, pa.f, pa.r, gRNA.size = 20,
