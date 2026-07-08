@@ -256,12 +256,12 @@ getUniqueCleavageEvents <-
         colnames(umi) <- c("readName", "UMI")
         umi$readName <- gsub("^@", "", umi$readName)
         if (apply.both.max.len)
-            align <- subset(align, width.first <= max.R1.len &
-                width.last <= max.R2.len)
+            align <- align[which(align$width.first <= max.R1.len &
+                align$width.last <= max.R2.len), ]
         else
-            align <- subset(align,
-                            (width.first > 0L & width.first <= max.R1.len) |
-                                (width.last > 0L & width.last <= max.R2.len))
+            align <- align[which(
+                            (align$width.first > 0L & align$width.first <= max.R1.len) |
+                                (align$width.last > 0L & align$width.last <= max.R2.len)), ]
         align.umi <- merge(align, umi)
         all.ind <- seq(dim(align.umi)[1])
         align.umi <- align.umi[setdiff(all.ind, grep("N", align.umi$UMI)), ]
@@ -277,17 +277,17 @@ getUniqueCleavageEvents <-
               hist(align.umi$width.last, xlab = "R2 aligned read width", main = "")
         dev.off()
 ### plus means R2 on plus strand
-        R2.good.len <- subset(align.umi, qwidth.last <= max.R2.len &
-                                  qwidth.last >= min.R2.mapped)
-        R2.umi.plus <- subset(R2.good.len, strand.last == "+")
-        R2.umi.minus <- subset(R2.good.len, strand.last == "-")
+        R2.good.len <- align.umi[which(align.umi$qwidth.last <= max.R2.len &
+                                  align.umi$qwidth.last >= min.R2.mapped), ]
+        R2.umi.plus <- R2.good.len[which(R2.good.len$strand.last == "+"), ]
+        R2.umi.minus <- R2.good.len[which(R2.good.len$strand.last == "-"), ]
 
-        R1.good.len <- subset(align.umi, qwidth.first <= max.R1.len &
-                                  qwidth.first >= min.R1.mapped)
-        R1.umi.plus <- subset(R1.good.len, strand.first == "-" &
-                                  !readName %in% R2.umi.plus$readName)
-        R1.umi.minus <- subset(R1.good.len, strand.first == "+" &
-                                   !readName %in% R2.umi.minus$readName)
+        R1.good.len <- align.umi[which(align.umi$qwidth.first <= max.R1.len &
+                                  align.umi$qwidth.first >= min.R1.mapped), ]
+        R1.umi.plus <- R1.good.len[which(R1.good.len$strand.first == "-" &
+                                  !R1.good.len$readName %in% R2.umi.plus$readName), ]
+        R1.umi.minus <- R1.good.len[which(R1.good.len$strand.first == "+" &
+                                   !R1.good.len$readName %in% R2.umi.minus$readName), ]
 
         if(!removeDuplicate)
         {
@@ -609,40 +609,40 @@ importBEDAlignments <- function(file,
     all <- merge(R1, R2, by="readName", all.x = keep.R1only,
                  all.y = keep.R2only, suffixes = c(".first", ".last"))
     if (apply.both.min.mapped)
-        all <- subset(all, (is.na(all$end.first) |
+        all <- all[which((is.na(all$end.first) |
                            (all$end.first - all$start.first) >= min.R1.mapped) &
                              (is.na(all$end.last) |
-                             (all$end.last - all$start.last) >= min.R2.mapped))
+                             (all$end.last - all$start.last) >= min.R2.mapped)), ]
     else
-        all <- subset(all, (all$end.first - all$start.first) >= min.R1.mapped |
-                          (all$end.last - all$start.last) >= min.R2.mapped )
+        all <- all[which((all$end.first - all$start.first) >= min.R1.mapped |
+                          (all$end.last - all$start.last) >= min.R2.mapped), ]
     if (concordant.strand)
-        all <- subset(all, is.na(all$strand.first) | is.na(all$strand.last) |
-                          all$strand.last != all$strand.first)
+        all <- all[which(is.na(all$strand.first) | is.na(all$strand.last) |
+                          all$strand.last != all$strand.first), ]
     all$start.first <- all$start.first + 1L # BED is 0-based
     all$start.last <- all$start.last + 1L
     if (same.chromosome)
-        all <- subset(all, is.na(all$seqnames.first) | is.na(all$seqnames.last) |
-                          all$seqnames.first == all$seqnames.last)
+        all <- all[which(is.na(all$seqnames.first) | is.na(all$seqnames.last) |
+                          all$seqnames.first == all$seqnames.last), ]
     if (keep.R1only && !keep.R2only)
     {
-        all <- subset(all, !is.na(all$seqnames.last))
+        all <- all[which(!is.na(all$seqnames.last)), ]
     }
     else if (keep.R2only && !keep.R1only)
     {
-        all <- subset(all, !is.na(all$seqnames.first))
+        all <- all[which(!is.na(all$seqnames.first)), ]
     }
     else if (!keep.R1only && !keep.R2only)
     {
-        all <- subset(all, !is.na(all$seqnames.first) &
-                          !is.na(all$seqnames.last))
+        all <- all[which(!is.na(all$seqnames.first) &
+                          !is.na(all$seqnames.last)), ]
     }
     distance <- ifelse(all$strand.last == "-", (all$start.last - all$end.first),
                        (all$start.first - all$end.last))
     distance[!is.na(all$seqnames.first) & !is.na(all$seqnames.last) &
                  all$seqnames.first != all$seqnames.last] <- distance.inter.chrom
     all <- cbind(all, distance)
-    all <- subset(all, is.na(distance) | distance <=  max.paired.distance)
+    all <- all[which(is.na(all$distance) | all$distance <=  max.paired.distance), ]
     n.cores <- min(n.cores, detectCores() -1 )
     unique.cigar <- unique(c(all$cigar.first, all$cigar.last))
     if (n.cores > 1)

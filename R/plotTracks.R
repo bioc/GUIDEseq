@@ -251,7 +251,7 @@ plotTracks <- function(offTargetFile, sep ="\t",
     {
        if (length(score.col) != 2 || 
            length(intersect(score.col, allowed.score.cols)) != 2) {
-         x.posCFDscore = subset(x, x$predicted_cleavage_score > 0)
+         x.posCFDscore = x[which(x$predicted_cleavage_score > 0), ]
          p1 <- ggplot(x, aes(log10(n.distinct.UMIs), 
                             log10(predicted_cleavage_score +
                                     plot.zero.logscale ))) +

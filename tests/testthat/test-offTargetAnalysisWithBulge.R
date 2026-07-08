@@ -10,7 +10,7 @@ test_that("getOfftargetScoreBulge with deletion in gRNA works", {
   gRNA <- "TGCTTGGTCGGCACTGATAG"
   gRNA.name <- "Test1450"
 
-  mat <- nucleotideSubstitutionMatrix(match = 1, mismatch = -3, baseOnly = TRUE)
+  mat <- pwalign::nucleotideSubstitutionMatrix(match = 1, mismatch = -3, baseOnly = TRUE)
   temp <- offTargetAnalysisWithBulge(gRNA = gRNA, gRNA.name = gRNA.name,
         peaks = peaks, BSgenomeName = Hsapiens, mat = mat,
         mismatch.activity.file = mismatch.activity.file)

@@ -61,7 +61,8 @@
 annotateOffTargets <-
 function (thePeaks, txdb, orgAnn)
 {
-    thePeaks <- subset(thePeaks, !is.na(offTarget_Start) & offTarget_Start != "")
+    thePeaks <- thePeaks[which(!is.na(thePeaks$offTarget_Start) &
+        thePeaks$offTarget_Start != ""), ]
     peaks.RD <- GRanges(seqnames = Rle(thePeaks$chromosome),
         ranges = IRanges(start = as.numeric(thePeaks$offTarget_Start),
         end = as.numeric(thePeaks$offTarget_End), names = thePeaks$offTarget))

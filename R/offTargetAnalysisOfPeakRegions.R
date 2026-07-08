@@ -299,25 +299,25 @@ offTargetAnalysisOfPeakRegions <-
             offtargets$offTarget_Start + PAM.size  + gRNA.size  - 1
 
         offtargets.minus.minus <-
-            subset(offtargets, as.character(offtargets$peak_strand) == "-" &
-            as.character(offtargets$offTargetStrand) == "-")
-        offtargets.minus.plus <- subset(offtargets,
+            offtargets[which(as.character(offtargets$peak_strand) == "-" &
+            as.character(offtargets$offTargetStrand) == "-"), ]
+        offtargets.minus.plus <- offtargets[which(
             as.character(offtargets$peak_strand) == "-" &
-            as.character(offtargets$offTargetStrand) == "+")
+            as.character(offtargets$offTargetStrand) == "+"), ]
         if (dim(offtargets.minus.minus)[1] > 0)
             offtargets.minus.minus$offTargetStrand <- "+"
         if (dim(offtargets.minus.plus)[1] > 0)
             offtargets.minus.plus$offTargetStrand<- "-"
 
-        offtargets <- rbind(subset(offtargets,
+        offtargets <- rbind(offtargets[which(
             as.character(offtargets$peak_strand) == "+" |
             as.character(offtargets$peak_strand) == "*" |
-            is.na(offtargets$offTargetStrand)),
+            is.na(offtargets$offTargetStrand)), ],
             offtargets.minus.minus, offtargets.minus.plus)
         if (keepTopOfftargetsOnly)
         {
-            peaks.without.offtargets <- subset(offtargets, is.na(gRNAPlusPAM) | gRNAPlusPAM == "")
-            offtargets <- subset(offtargets, !is.na(gRNAPlusPAM) & gRNAPlusPAM != "")
+            peaks.without.offtargets <- offtargets[which(is.na(offtargets$gRNAPlusPAM) | offtargets$gRNAPlusPAM == ""), ]
+            offtargets <- offtargets[which(!is.na(offtargets$gRNAPlusPAM) & offtargets$gRNAPlusPAM != ""), ]
             if (dim(offtargets)[1] > 1)
             {
                 offtargets$predicted_cleavage_score <-
@@ -330,15 +330,15 @@ offTargetAnalysisOfPeakRegions <-
              }
             ###### keep only one nearest offtarget for each peak
              temp <- as.data.frame(table(offtargets$names))
-             names.notUnique <- subset(offtargets,
-                  offtargets$names %in% temp[temp[,2] > 1, 1])
-             offtargets <- subset(offtargets,
-                  offtargets$names %in% temp[temp[,2] ==1, 1])
+             names.notUnique <- offtargets[which(
+                  offtargets$names %in% temp[temp[,2] > 1, 1]), ]
+             offtargets <- offtargets[which(
+                  offtargets$names %in% temp[temp[,2] ==1, 1]), ]
              if (dim(temp[temp[,2] > 1, ])[1] > 0)
              {
                  for (nu.name in temp[temp[,2] >1, 1])
                  {
-                      notUnique <- subset(names.notUnique, names == nu.name)
+                      notUnique <- names.notUnique[which(names.notUnique$names == nu.name), ]
                       this.peak <- IRanges(start = notUnique$peak_start[1],
                           end = notUnique$peak_end[1])
                       nu.ots <- IRanges(start = notUnique$offTarget_Start,
@@ -358,13 +358,13 @@ offTargetAnalysisOfPeakRegions <-
              if (dim(offtargets)[1] > dim(temp)[1])
              {
 	         temp <- as.data.frame(table(offtargets$offTarget))
-                 offtargets.notUnique <- subset(offtargets,
-                     offtargets$offTarget %in% temp[temp[,2] > 1, 1])
-                 offtargets <- subset(offtargets,
-                     offtargets$offTarget %in% temp[temp[,2] ==1, 1])
+                 offtargets.notUnique <- offtargets[which(
+                     offtargets$offTarget %in% temp[temp[,2] > 1, 1]), ]
+                 offtargets <- offtargets[which(
+                     offtargets$offTarget %in% temp[temp[,2] ==1, 1]), ]
                  for (ot in temp[temp[,2] >1, 1])
                  {
-                     notUnique <- subset(offtargets.notUnique, offTarget == ot)
+                     notUnique <- offtargets.notUnique[which(offtargets.notUnique$offTarget == ot), ]
                      this.ot <- IRanges(start = notUnique$offTarget_Start[1],
                           end = notUnique$offTarget_End[1])
                      nu.peaks <- IRanges(start = notUnique$peak_start, end = notUnique$peak_end)

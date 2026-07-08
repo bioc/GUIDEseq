@@ -159,7 +159,7 @@ offTargetAnalysisWithBulge <-
             PAM.location = PAM.location
             )
     temp <- alns$aln.all
-    alns <- subset(temp,
+    alns <- temp[which(
                    (as.numeric(temp$n.insertion) +
                       as.numeric(temp$n.deletion) <= max.DNA.bulge &
                       as.numeric(temp$n.mismatch) +
@@ -167,7 +167,7 @@ offTargetAnalysisWithBulge <-
                         as.numeric(temp$n.deletion)) <= max.mismatch &
                      temp$PAM.sequence != "" & 
                      nchar(temp$PAM.sequence) == PAM.size
-                )
+                ), ]
 
     if (nrow(alns) ==  0 || sum(unlist(alns$n.insertion)) +
         sum(unlist(alns$n.deletion)) == 0)
@@ -214,10 +214,10 @@ offTargetAnalysisWithBulge <-
     ##### the mismatch activity  is given as pos 20, 19, 18,....1 distance from PAM,    ##### Position named as 1, 2, 3, .....20 though
     ##### and the featureVectors is in the same order now
     ##### so no need to reverse any more. weights = rev(weights)
-    fv.geThan1 <- subset(featureVectors, as.numeric(as.character(
-        featureVectors$n.insertion)) >= 1)
-    fv.lessThan1 <- subset(featureVectors, as.numeric(as.character(
-        featureVectors$n.insertion)) < 1)
+    fv.geThan1 <- featureVectors[which(as.numeric(as.character(
+        featureVectors$n.insertion)) >= 1), ]
+    fv.lessThan1 <- featureVectors[which(as.numeric(as.character(
+        featureVectors$n.insertion)) < 1), ]
 
     featureVectors <- .updateScore(fv.geThan1, fv.lessThan1,
                           col.prefix = "IsInsertion.pos",
@@ -226,10 +226,10 @@ offTargetAnalysisWithBulge <-
                           position = insertion.activity$Position)
 
     # do the same for deletion
-    fv.geThan1 <- subset(featureVectors, as.numeric(as.character(
-        featureVectors$n.deletion)) >= 1)
-    fv.lessThan1 <- subset(featureVectors, as.numeric(as.character(
-        featureVectors$n.deletion)) < 1)
+    fv.geThan1 <- featureVectors[which(as.numeric(as.character(
+        featureVectors$n.deletion)) >= 1), ]
+    fv.lessThan1 <- featureVectors[which(as.numeric(as.character(
+        featureVectors$n.deletion)) < 1), ]
 
     score <- .updateScore(fv.geThan1, fv.lessThan1,
                     col.prefix = "IsDeletion.pos",

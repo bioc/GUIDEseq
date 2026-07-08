@@ -131,7 +131,7 @@ combineOfftargets <- function(offtarget.folder,
     all <- read.table(file.path(offtarget.folder[1],
         offtarget.filename, fsep = .Platform$file.sep),
         sep="\t", header = TRUE, stringsAsFactors = FALSE)
-    all <- subset(all, !is.na(all$offTarget))
+    all <- all[which(!is.na(all$offTarget)), ]
     if (!missing(exclude.col) && exclude.col != "")
         all <- all[, -which(colnames(all) %in% exclude.col)]
     # if(length(setdiff(common.col, colnames(all))) > 0)
@@ -159,7 +159,7 @@ combineOfftargets <- function(offtarget.folder,
         off <- read.table(file.path(offtarget.folder[i], offtarget.filename,
             fsep = .Platform$file.sep), sep="\t", header = TRUE,
             stringsAsFactors = FALSE)
-        off <- subset(off, !is.na(off$offTarget_sequence))
+        off <- off[which(!is.na(off$offTarget_sequence)), ]
         if (!missing(exclude.col) && exclude.col != "")
             off <- off[,-which(colnames(off) %in% exclude.col)]
         colnames(off)[!colnames(off) %in% common.col] <- paste(sample.name[i],
@@ -185,12 +185,12 @@ combineOfftargets <- function(offtarget.folder,
     vennDiagram(venn_cnt)
     if (remove.common.offtargets)
     {
-        all <- subset(all, rowSums(temp) < dim(temp)[2])
+        all <- all[which(rowSums(temp) < dim(temp)[2]), ]
     }
     if (!missing(control.sample.name))
     {
         if (control.sample.name %in%  sample.name)
-            all <- subset(all, !temp[, control.sample.name])
+            all <- all[which(!temp[, control.sample.name]), ]
         else
             message("Please note that control.sample.name is not on the sample.name list, filtering skipped!")
     }

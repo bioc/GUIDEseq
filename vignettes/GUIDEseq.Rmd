@@ -1,0 +1,254 @@
+---
+title: "GUIDEseq User's Guide"
+author:
+- name: Lihua Julie Zhu
+  affiliation: University of Massachusetts Chan Medical School, Worcester, MA, USA
+  email: julie.zhu@umassmed.edu
+- name: Michael Lawrence
+- name: Ankit Gupta
+- name: Hervé Pagès
+- name: Alper Kucukural
+- name: Manuel Garber
+- name: Scot A. Wolfe
+package: GUIDEseq
+output:
+  BiocStyle::html_document
+abstract: |
+  GUIDEseq implements the GUIDE-seq analysis workflow for
+  genome-wide profiling of off-target cleavage by CRISPR-Cas nucleases. It
+  includes functions for retaining one read per unique molecular identifier
+  (UMI), filtering reads lacking the integration oligo sequence, identifying
+  cleavage-site peaks, merging peaks from the plus and minus strands, and
+  performing target and off-target search of the input gRNA allowing
+  mismatches and bulges.
+vignette: |
+  %\VignetteIndexEntry{GUIDEseq User's Guide}
+  %\VignetteDepends{GUIDEseq}
+  %\VignetteKeywords{GUIDEseq}
+  %\VignettePackage{GUIDEseq}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+bibliography: Bioc.bib
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  crop = NULL
+)
+```
+
+# Introduction
+
+The most recently developed genome editing system, CRISPR-Cas9, has greater
+inherent flexibility than prior programmable nuclease platforms because
+sequence-specific recognition resides primarily within the associated sgRNA,
+which permits a simple alteration of its recognition sequence. The short
+Protospacer Adjacent Motif (PAM), which is recognized by Cas9, is the chief
+constraint on the target site design density. Because of its simplicity and
+efficacy, this technology is revolutionizing biological studies and holds
+tremendous promise for therapeutic applications [@Ledford2015; @Cox2015].
+
+However, imperfect cleavage specificity of CRISPR/Cas9 nuclease within the
+genome is a cause for concern for its therapeutic application. *S. pyogenes*
+Cas9 (SpyCas9)-based nucleases can cleave an imperfect heteroduplex formed
+between the guide sequence and a DNA sequence containing a functional PAM where
+the number, position and type of base mismatches can impact the level of
+activity [@Hsu2013; @Mali2013; @Fu2013]. This degree of promiscuity is
+problematic for therapeutic applications, since the generation of DNA breaks at
+unintended (off-target) sites has the potential to alter gene expression and
+function through direct mutagenesis or the generation of genomic
+rearrangements. Experimentally defining the number and activity of off-target
+sites for a given Cas9/sgRNA complex genome-wide is critical to assess and
+improve nuclease precision.
+
+A new suite of genome-wide off-target detection methods have recently been
+described that can identify sites with low cleavage activity within a
+population of nuclease-treated cells. One of the most sensitive and
+straightforward methods to employ is GUIDE-seq [@Tsai2015]. This method relies
+on erroneous NHEJ-mediated DNA repair to capture co-introduced blunt-ended
+double stranded oligonucleotides (dsODNs) at Cas9-induced breakpoints within
+the genome. The GUIDE-seq dsODNs display high insertion frequency (up to 50% of
+the measured indel rate [@Tsai2015]) at Cas9-induced DSBs, thereby tagging these
+loci for selective amplification and subsequent deep sequencing. The method is
+quite sensitive as off-target sites with >0.1% indel frequency can be detected,
+and the frequency of dsODN insertion appears to be correlated with the
+frequency of Cas9-induced lesions at each site [@Tsai2015]. This method has been
+used successfully to evaluate the precision of Cas9 and its variants (tru-sgRNAs
+[@Tsai2015] or PAM variants [@Kleinstiver2015]). Given its favorable properties,
+GUIDE-seq could become a standard in the nuclease field for off-target analysis.
+
+While the GUIDE-seq method is straightforward to employ, to date no
+bioinformatic tools have been released to the community to support the analysis
+of this data. We developed the `r Biocpkg("GUIDEseq")` package [@Zhu2017] to
+facilitate the analysis of GUIDE-seq datasets, including retaining one read per
+unique molecular identifier (UMI), filtering reads lacking the integration
+oligo sequence (dsODNs), identifying peak locations (cleavage sites) and
+heights, merging cleavage sites from the plus strand and those from the minus
+strand, and performing target and off-target search of the input gRNA. This
+analysis leverages our `r Biocpkg("ChIPpeakAnno")` package [@Zhu2010] for
+merging cleavage sites from the plus strand and minus strand, and the
+`r Biocpkg("CRISPRseek")` package [@Zhu2014] for defining the homology of any
+identified off-target site to the guide sequence and Cas9 PAM specificity.
+
+# Workflow of GUIDE-seq data analysis
+
+Here is the workflow of GUIDE-seq data analysis with human sequence. First
+load `r Biocpkg("GUIDEseq")` and `r Biocpkg("BSgenome.Hsapiens.UCSC.hg19")`.
+
+To find the BSgenome of other species, please refer to `available.genomes` in
+the `r Biocpkg("BSgenome")` package. For example,
+`r Biocpkg("BSgenome.Hsapiens.UCSC.hg19")` for hg19,
+`r Biocpkg("BSgenome.Mmusculus.UCSC.mm10")` for mm10,
+`r Biocpkg("BSgenome.Celegans.UCSC.ce6")` for ce6,
+`r Biocpkg("BSgenome.Rnorvegicus.UCSC.rn5")` for rn5,
+`r Biocpkg("BSgenome.Drerio.UCSC.danRer7")` for Zv9,
+and `r Biocpkg("BSgenome.Dmelanogaster.UCSC.dm3")` for dm3.
+
+Then specify the alignment file path as `alignment.inputfile`, and a umi file
+path as `umi.inputfile` containing the unique molecular identifier for each
+sequence.
+
+```{r input-files, message = FALSE}
+library(GUIDEseq)
+umifile <- system.file("extdata", "UMI-HEK293_site4_chr13.txt",
+                       package = "GUIDEseq")
+bedfile <- system.file("extdata", "bowtie2.HEK293_site4_chr13.sort.bed",
+                       package = "GUIDEseq")
+bamfile <- system.file("extdata", "bowtie2.HEK293_site4_chr13.sort.bam",
+                       package = "GUIDEseq")
+```
+
+The `alignment.inputfile` is an alignment file in BED format containing CIGAR
+information. It contains chromosome, start, end, readID, mapping quality, strand
+and CIGAR information as a tab-delimited file. Here is an example line:
+
+```
+chr13 27629253 27629403 HWI-M01326:156:1:113:4572:6938/1 44 + 150M
+```
+
+When fastq files are available, scripts for binning reads, removing adaptors and
+mapping to the genome are available at
+<http://mccb.umassmed.edu/GUIDE-seq/>. Otherwise, a one-line, 6-argument
+pipeline GS-Preprocess at <https://github.com/umasstr/GS-Preprocess>
+[@Rodriguez2021] can be used to generate the needed input files for GUIDEseq.
+The input file for GS-Preprocess is the standard raw data output in BCL file
+format.
+
+The `umi.inputfile` is a tab-delimited file containing at least two columns,
+read IDs and corresponding unique molecular identifiers (UMI). A script for
+creating the `umi.inputfile` is available at
+<http://mccb.umassmed.edu/GUIDE-seq/getUmi.pl>. An example input file is at
+<http://mccb.umassmed.edu/GUIDE-seq/testGetUmi/>. Please make sure to use R1
+reads as input to `getUmi.pl`.
+
+## Step 1: Remove PCR bias and obtain unique cleavage events
+
+PCR amplification often leads to biased representation of the starting sequence
+population. To track the sequence tags present in the initial sequence library,
+unique molecular identifiers (UMI) are added to the 5 prime of each sequence in
+the starting library. The function `getUniqueCleavageEvents` uses the UMI
+sequence in the `umi.inputfile` (optionally containing the UMI plus the first
+few sequence from the R1 reads) to obtain the starting sequence library. It also
+filters out reads that do not contain the integration oligo sequence, are too
+short, or are not in the right paired configuration.
+
+For detailed parameter settings for the function `getUniqueCleavageEvents`,
+please type `help(getUniqueCleavageEvents)`.
+
+```{r unique-cleavage}
+uniqueCleavageEvents <- getUniqueCleavageEvents(bamfile, umifile,
+                                                n.cores.max = 1)
+uniqueCleavageEvents$cleavage.gr
+```
+
+## Step 2: Summarize cleavage events
+
+Calling the function `getPeaks` with the results from `getUniqueCleavageEvents`
+outputs summarized cleavage events for each moving window with at least
+`min.reads` of cleavage events.
+
+By default, window size is set to 20, step is set to 20, and `min.reads` is set
+to 2. For detailed parameter settings using the function `getPeaks`, please type
+`help(getPeaks)`.
+
+```{r get-peaks}
+peaks <- getPeaks(uniqueCleavageEvents$cleavage.gr, min.reads = 80)
+peaks.gr <- peaks$peaks
+peaks.gr
+```
+
+## Step 3: Merge peaks from plus and minus strand
+
+Calling the function `mergePlusMinusPeaks` with the output from `getPeaks`
+merges peaks from the plus strand and minus strand with a specific orientation
+and within a certain distance apart.
+
+By default, `plus.strand.start.gt.minus.strand.end` is set to `TRUE` and
+`distance.threshold` is set to 40, i.e., twice the window size. For detailed
+parameter settings using the function `mergePlusMinusPeaks`, please type
+`help(mergePlusMinusPeaks)`.
+
+```{r merge-peaks}
+mergedPeaks <- mergePlusMinusPeaks(peaks.gr = peaks.gr,
+    output.bedfile = "mergedPeaks.bed")
+mergedPeaks$mergedPeaks.gr
+head(mergedPeaks$mergedPeaks.bed)
+```
+
+## Step 4: Off-target analysis of extended regions around the identified cleavage sites
+
+Calling the function `offTargetAnalysisOfPeakRegions` with the input gRNA, peaks
+and genome of interest annotates the identified cleavage sites with sequence
+homology to the input gRNA. For detailed parameter settings using the function
+`offTargetAnalysisOfPeakRegions`, please type
+`help(offTargetAnalysisOfPeakRegions)`.
+
+```{r off-target, message = FALSE, warning = FALSE}
+library(BSgenome.Hsapiens.UCSC.hg19)
+peaks <- system.file("extdata", "T2plus100OffTargets.bed",
+    package = "CRISPRseek")
+gRNAs <- system.file("extdata", "T2.fa",
+    package = "CRISPRseek")
+outputDir <- getwd()
+offTargets <- offTargetAnalysisOfPeakRegions(gRNA = gRNAs, peaks = peaks,
+    format = c("fasta", "bed"),
+    peaks.withHeader = TRUE, BSgenomeName = Hsapiens,
+    upstream = 50, downstream = 50, PAM.size = 3, gRNA.size = 20,
+    PAM = "NGG", PAM.pattern = "(NAG|NGG|NGA)$", max.mismatch = 2,
+    outputDir = outputDir,
+    orderOfftargetsBy = "predicted_cleavage_score",
+    allowed.mismatch.PAM = 2, overwrite = TRUE
+   )
+```
+
+## Run all steps in one workflow function
+
+The function `GUIDEseqAnalysis` is a wrapper function that uses the UMI sequence
+(or the UMI plus the first few bases of each sequence from the R1 reads) to
+estimate the starting sequence library, piles up reads with a user-defined
+window and step size, identifies the cleavage sites, merges cleavage sites from
+the plus strand and minus strand, and performs off-target analysis of the
+extended regions around the identified cleavage sites. For detailed parameter
+settings using the function `GUIDEseqAnalysis`, please type
+`help(GUIDEseqAnalysis)`.
+
+```{r guideseq-analysis, message = FALSE, warning = FALSE}
+gRNA.file <- system.file("extdata", "gRNA.fa", package = "GUIDEseq")
+system.time(guideSeqRes <- GUIDEseqAnalysis(
+    alignment.inputfile = bamfile,
+    umi.inputfile = umifile, gRNA.file = gRNA.file,
+    orderOfftargetsBy = "peak_score",
+    descending = TRUE, n.cores.max = 1,
+    BSgenomeName = Hsapiens, min.reads = 1))
+names(guideSeqRes)
+```
+
+# Session info {.unnumbered}
+
+```{r session-info, echo = FALSE}
+sessionInfo()
+```
+
+# References {.unnumbered}

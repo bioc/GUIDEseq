@@ -23,7 +23,7 @@
         PeakLocForDistance = PeakLocForDistance,
         FeatureLocForDistance = FeatureLocForDistance,
         maxgap = distance.threshold)
-    gr <- subset(gr, gr$peak != gr$feature)
+    gr <- gr[which(gr$peak != gr$feature)]
     if (plus.strand.start.gt.minus.strand.end)
     {
         ann.peaks <- as.data.frame(gr[!is.na(gr$distancetoFeature) &
@@ -125,7 +125,7 @@ function(gr, window.size = 20L, step = 10L,
         start <- end - runLength(observed[[i]]) + 1
         value <- runValue(observed[[i]])
         temp <- cbind(names(observed)[i], start, end, value)
-        temp <- subset(temp, as.numeric(temp[,4]) >= min.reads)
+        temp <- temp[which(as.numeric(temp[,4]) >= min.reads), , drop = FALSE]
         pos.bg <- as.numeric(temp[,2]) - ceiling((bg.window.size - window.size)/2)
         pos.bg[pos.bg < 1] <- 1
         bg.value <- as.data.frame(bg[[i]][pos.bg ])

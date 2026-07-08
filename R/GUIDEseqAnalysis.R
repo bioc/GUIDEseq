@@ -847,9 +847,9 @@ GUIDEseqAnalysis <- function(alignment.inputfile,
             if (length(which(colnames(offTargets) == "n.guide.mismatch")) > 0)
             {
                 offTargets <- rbind(offTargets.b, offTargets)
-                offTargets <- subset(offTargets, 
+                offTargets <- offTargets[which(
                                     (as.numeric(offTargets$n.DNA.bulge) + 
-                                        as.numeric(offTargets$n.RNA.bulge)) <= max.n.bulge)
+                                        as.numeric(offTargets$n.RNA.bulge)) <= max.n.bulge), ]
             }
             else
             {
@@ -860,7 +860,7 @@ GUIDEseqAnalysis <- function(alignment.inputfile,
     }
     cat("Done with offtarget search!\n")
 
-    offTargets <- subset(offTargets, !is.na(offTargets$offTarget))
+    offTargets <- offTargets[which(!is.na(offTargets$offTarget)), ]
     
     if (nrow(offTargets) == 0)
     {

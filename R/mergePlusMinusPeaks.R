@@ -70,8 +70,8 @@ mergePlusMinusPeaks <-
             "specify a valid metadata column with peak height in peaks.gr \n"))
     names(peaks.gr) <- paste(paste(seqnames(peaks.gr), strand(peaks.gr), sep=""),
         start(peaks.gr),end(peaks.gr), sep=":")
-    pos.gr <- subset(peaks.gr, strand(peaks.gr) %in% c( "+", "*"))
-    neg.gr <- subset(peaks.gr, strand(peaks.gr) == "-")
+    pos.gr <- peaks.gr[strand(peaks.gr) %in% c( "+", "*")]
+    neg.gr <- peaks.gr[strand(peaks.gr) == "-"]
     ### peaks from both strand or present in both library
     if (length(pos.gr) >0 && length(neg.gr) > 0)
     {

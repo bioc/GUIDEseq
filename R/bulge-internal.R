@@ -125,7 +125,7 @@
                                                  DNAString(substr(this.seq,
                                                        ind.start[i] - PAM.size,
                                                        ind.start[i] - 1))))))}))
-    sub.seq <- subset(sub.seq, !is.na(sub.seq[,5]))
+    sub.seq <- sub.seq[which(!is.na(sub.seq[,5])), , drop = FALSE]
     temp <- cbind(sub.seq, paste0(sub.seq[,5], sub.seq[,6]))
     colnames(temp) <- c("Seq2Search", "offTargetStrand",
                         "offTarget_Start", "offTarget_End",

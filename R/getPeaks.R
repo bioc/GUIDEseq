@@ -14,8 +14,8 @@ function(gr, window.size = 20L, step = 20L, bg.window.size = 5000L,
     }
     stats <- match.arg(stats)
     p.adjust.methods <- match.arg(p.adjust.methods)
-    plus.gr = subset(gr, strand(gr) == "+")
-    minus.gr = subset(gr, strand(gr) == "-")
+    plus.gr = gr[strand(gr) == "+"]
+    minus.gr = gr[strand(gr) == "-"]
     if (length(plus.gr) >= 2)
     {
         message("prepare for plus strand ...");
@@ -75,10 +75,10 @@ function(gr, window.size = 20L, step = 20L, bg.window.size = 5000L,
         local.max.gr <- do.call(c, parLapply(cl, seqnames(seqinfo(both.runsum)),
             function(chr) {
             message("processing chromosome", chr, "\n")
-            this.gr <- subset(both.runsum, seqnames(both.runsum) == chr &
-                strand(both.runsum) == "+")
-            minus.gr <- subset(both.runsum, seqnames(both.runsum) == chr &
-                strand(both.runsum) == "-")
+            this.gr <- both.runsum[seqnames(both.runsum) == chr &
+                strand(both.runsum) == "+"]
+            minus.gr <- both.runsum[seqnames(both.runsum) == chr &
+                strand(both.runsum) == "-"]
             #max.pos <- which(diff(sign(diff(as.numeric(
                 #as.character(this.gr$count)))))==-2)+1
             if (length(this.gr) >= 1) {
@@ -123,8 +123,8 @@ function(gr, window.size = 20L, step = 20L, bg.window.size = 5000L,
             if (length(chr.gr) > 1L) {
                 message("processing chromosome: ", seqnames(chr.gr)[1L])
             }
-            plus.gr <- subset(chr.gr, strand == "+")
-            minus.gr <- subset(chr.gr, strand == "-")
+            plus.gr <- chr.gr[strand(chr.gr) == "+"]
+            minus.gr <- chr.gr[strand(chr.gr) == "-"]
             if (length(plus.gr) >= 1) {
                 max.pos <- .locMaxPos(plus.gr, window.size = window.size,
                     step = step, min.reads = min.reads)
@@ -170,13 +170,13 @@ function(gr, window.size = 20L, step = 20L, bg.window.size = 5000L,
         {
             both.runsum$adjusted.p.value <- p.adjust(both.runsum$p.value,
                 method = p.adjust.methods)
-            peaks <- subset(both.runsum, both.runsum$adjusted.p.value <= maxP &
-                both.runsum$SNratio >= min.SNratio)
+            peaks <- both.runsum[which(both.runsum$adjusted.p.value <= maxP &
+                both.runsum$SNratio >= min.SNratio)]
         }
         else
         {
-            peaks <- subset(both.runsum, both.runsum$p.value <= maxP &
-                both.runsum$SNratio >= min.SNratio)
+            peaks <- both.runsum[which(both.runsum$p.value <= maxP &
+                both.runsum$SNratio >= min.SNratio)]
         }
     }
     else {
@@ -246,8 +246,8 @@ getPeaks <-
     }
     stats <- match.arg(stats)
     p.adjust.methods <- match.arg(p.adjust.methods)
-    plus.gr = subset(gr, strand(gr) == "+")
-    minus.gr = subset(gr, strand(gr) == "-")
+    plus.gr = gr[strand(gr) == "+"]
+    minus.gr = gr[strand(gr) == "-"]
     if (length(plus.gr) < 2 && length(minus.gr) < 2) {
         stop("too few reads for peak calling!")
     }
@@ -299,8 +299,8 @@ getPeaks <-
               return(GRanges())
            }
            message("finding local max for chromosome: ", seqnames(chr.gr)[1L])
-           plus.gr <- subset(chr.gr, strand == "+")
-           minus.gr <- subset(chr.gr, strand == "-")
+           plus.gr <- chr.gr[strand(chr.gr) == "+"]
+           minus.gr <- chr.gr[strand(chr.gr) == "-"]
            c(locMaxForChrStrand(plus.gr),
               locMaxForChrStrand(minus.gr))
          }
@@ -320,8 +320,8 @@ getPeaks <-
          both.runsum$adjusted.p.value <- p.adjust(both.runsum$p.value,
                                              method = p.adjust.methods)
          if (length(both.runsum) > 0)
-             peaks <- subset(both.runsum,
-                    adjusted.p.value <= maxP & SNratio >= min.SNratio)
+             peaks <- both.runsum[which(both.runsum$adjusted.p.value <= maxP &
+                    both.runsum$SNratio >= min.SNratio)]
          else
              peaks <- GRanges()
          list(peaks = peaks, both.runsum.bk = both.runsum.bk,

@@ -86,11 +86,11 @@ getAlnWithBulge <- function(gRNA, gRNA.name,
                                     PAM.size = PAM.size,
                                     gRNA.size = gRNA.size,
                                     max.DNA.bulge = max.DNA.bulge)
-    seq.f <- subset(subSeqs,
-              subSeqs$offTargetStrand == "+")
+    seq.f <- subSeqs[which(
+              subSeqs$offTargetStrand == "+"), ]
 
-    seq.r <- subset(subSeqs,
-              subSeqs$offTargetStrand == "-")
+    seq.r <- subSeqs[which(
+              subSeqs$offTargetStrand == "-"), ]
 
     seq.f.DSS <- DNAStringSet(seq.f$ProtoSpacer)
     seq.r.DSS <- DNAStringSet(seq.r$ProtoSpacer)
